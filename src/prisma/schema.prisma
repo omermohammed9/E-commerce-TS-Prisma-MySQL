@@ -1,0 +1,89 @@
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:omar@127.0.0.1:3306/mydb"
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  passwordHash    String
+  firstName       String?
+  lastName        String?
+  email           String    @unique
+  profilePicture  String?
+  bio             String?
+  phoneNumber     String?
+  address         String?
+  isActive        Boolean   @default(true)
+  emailVerified   Boolean   @default(false)
+  lastLogin       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  socialLinks     Json?
+  privacySettings Json?
+  orders        Order[]
+}
+model Order {
+  id            Int       @id @default(autoincrement())
+  userId        Int       // Foreign key that references the User model's id
+  totalAmount   Float     // Total cost of the order
+  status        OrderStatus // Status of the order, using an enum
+  paymentStatus PaymentStatus // Payment status, using an enum
+  createdAt     DateTime  @default(now()) // When the order was placed
+  updatedAt     DateTime  @updatedAt // When the order was last updated
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id])
+  orderDetails  OrderDetail[] // The items within the order
+
+  // Optional: Shipping and Billing Information
+  shippingAddress String? // Shipping address for the order
+  billingAddress  String? // Billing address for the order
+
+  // Optional: Payment Information
+  paymentMethod   String? // Payment method used
+  paymentDetails  Json?   // JSON field for additional payment details like transaction IDs
+
+  // Optional: Tracking Information
+  trackingNumber  String? // Tracking number for shipment
+  shippedAt       DateTime? // When the order was shipped
+  deliveredAt     DateTime? // When the order was delivered
+}
+
+
+// Enum for Order Status
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// Enum for Payment Status
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// OrderDetail could look like this
+model OrderDetail {
+  id          Int     @id @default(autoincrement())
+  orderId     Int     // Foreign key that references the Order model's id
+  productId   Int     // Foreign key that references a Product model's id (assuming you have a Product model)
+  quantity    Int     // Quantity of the product ordered
+  price       Float   // Price of the product at the time of order
+  createdAt   DateTime @default(now()) // When the item was added to the order
+  updatedAt   DateTime @updatedAt // When the item was last updated
+  // Relations
+  order       Order   @relation(fields: [orderId], references: [id])
+  // product     Product @relation(fields: [productId], references: [id]) // Uncomment if you have a Product model
+  @@unique([orderId, productId]) // Each product can only appear once per order
+}
