@@ -1,5 +1,5 @@
 import { OrderModel, Order } from '../models/order.model';
-import {Prisma} from "@prisma/client";
+import {CreateOrderDTO, UpdateOrderDTO} from "../types/order.types";
 
 class OrderService {
     private orderModel: OrderModel;
@@ -19,12 +19,15 @@ class OrderService {
     }
 
 
-    public async createOrder(orderData: Prisma.OrderCreateInput): Promise<Order> {
+    public async createOrder(orderData:CreateOrderDTO): Promise<Order> {
         // Create a new order
-        return this.orderModel.create(orderData);
+        return this.orderModel.create( {
+            ...orderData,
+
+        });
     }
 
-    public async updateOrder(id: number, orderData: Partial<Order>): Promise<Order> {
+    public async updateOrder(id: number, orderData: UpdateOrderDTO): Promise<Order> {
         // Update an existing order
         return await this.orderModel.update(id, orderData);
     }

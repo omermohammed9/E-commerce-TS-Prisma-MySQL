@@ -3,9 +3,11 @@ import {PrismaClient, User,} from '@prisma/client';
 import {hashPassword} from "../utils/passwordUtils";
 import {PrismaClientKnownRequestError} from "@prisma/client/runtime/library";
 import {extractUserVariables, extractUserUpdateVariables} from "./variables";
+import {signJwt} from "../utils/jwt";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
-
 
 export const createUser = async (req: Request, res: Response) => {
    // const userVariables = extractUserVariables(req.body);
@@ -18,7 +20,39 @@ export const createUser = async (req: Request, res: Response) => {
                 passwordHash,
             },
         });
-        res.json(user);
+        const tokenOptions: jwt.SignOptions = {
+            expiresIn: '60s',
+            //issuer: 'Tsc-Prisma-MySQL',
+            algorithm: 'HS256', // Default algorithm
+        };
+        const generateJWT = signJwt(user.id, tokenOptions);
+        console.log(generateJWT);
+        res.json({
+            user,
+            token: generateJWT
+        });
+
+    } catch (error: any) {
+        res.status(500).send(error.message);
+    }
+};
+export const login = async (req: Request, res: Response) => {
+    const {email, password} = req.body;
+    try {
+        const user = await prisma.user.findUnique({
+            where: {email},
+        });
+        if (!user) {
+            res.status(404).json({message: 'User not found'});
+            return;
+        }
+        const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+        if (!passwordMatches) {
+            res.status(401).json({message: 'Invalid password'});
+            return;
+        }
+        const generateJWT = signJwt(user.id);
+        res.json({user, token: generateJWT});
     } catch (error: any) {
         res.status(500).send(error.message);
     }
@@ -59,7 +93,6 @@ export const updateUserById = async (req: Request, res: Response) => {
             res.status(400).json({ message: 'Invalid user ID format' });
             return;
         }
-
         const { password, ...restOfUserVariables } = userVariables;
         const updateData = {
             ...restOfUserVariables,
