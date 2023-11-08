@@ -20,8 +20,12 @@ class OrderController {
         try {
             const orders: Order[] = await this.orderService.getAllOrders();
             res.status(200).json(orders);
-        } catch (error: any) {
-            return res.status(500).json({ error: error.message });
+        } catch (error: Response | any) {
+            // Just log the error and send a 500 status code
+            console.error(error.message);
+            if (!res.headersSent) {
+                res.status(500).json({ error: error.message });
+            }
         }
     }
 

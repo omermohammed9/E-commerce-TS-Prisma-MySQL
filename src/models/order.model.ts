@@ -1,4 +1,5 @@
 import {PrismaClient, Order as PrismaOrder, OrderStatus, PaymentStatus, Prisma} from '@prisma/client';
+import {CreateOrderDTO} from "../types/order.types";
 
 export type Order = {
     id: number;
@@ -27,9 +28,13 @@ export class OrderModel {
         return this.prisma.order.findUnique({ where: { id } });
     }
 
-    async create(data: Prisma.OrderCreateInput): Promise<PrismaOrder> {
+    async create(data: CreateOrderDTO): Promise<PrismaOrder> {
         // Create a new record with the provided data.
-        return this.prisma.order.create({ data });
+        return this.prisma.order.create({
+            data : {
+                ...data,
+            }
+        });
     }
 
     async update(id: number, data: Prisma.OrderUpdateInput): Promise<PrismaOrder> {
