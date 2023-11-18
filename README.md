@@ -14,9 +14,10 @@ Welcome to our Node.js Express Application, designed to manage orders and user i
 
 Our project includes several key components:
 
-- **Controllers** (`OrderController.ts`, `OrderDetailController.ts`): Handle HTTP request routing and logic.
+- **Controllers** (`OrderController.ts`, `OrderDetailController.ts`, `User.ts`): Handle HTTP request routing and logic.
 - **Models** (`order.model.ts`, `orderDetail.model.ts`): Define the structure for `Order` and `OrderDetail`.
 - **Services** (`OrderService.ts`, `OrderDetailService.ts`): Contain business logic for data handling.
+- **Middleware** (`auth.ts`): Containt authentication process for User Token.
 - **Types** (`order.types.ts`, `orderDetail.types.ts`): TypeScript type definitions for orders and order details.
 - **User Management** (`User.ts`): Handles user-related operations.
 - **Utils** (`jwt.ts`, `PasswordUtils.ts`, `PrismaClients.ts`): Utility functions for various operations.
