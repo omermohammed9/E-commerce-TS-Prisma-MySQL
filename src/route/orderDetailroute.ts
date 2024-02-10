@@ -5,6 +5,7 @@ const router = Router();
 const orderDetailController = new OrderDetailController();
 
 router.get('/getorderdetails/:orderId', orderDetailController.getOrderDetails);
+router.get('/getorderdetailbyid/:id', orderDetailController.getOrderDetailById);
 router.post('/addorderdetail', orderDetailController.addOrderDetail);
 router.put('/updateorderdetail/:id', orderDetailController.updateOrderDetail);
 router.delete('/deleteorderdetail/:id', orderDetailController.deleteOrderDetail);

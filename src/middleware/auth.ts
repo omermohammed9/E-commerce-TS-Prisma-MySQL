@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import prisma from "../utils/prismaClient";
 import {config} from "dotenv";
 
-
 interface JwtPayload {
     id: number;
 }
@@ -24,12 +23,9 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
     }
     try {
         const decoded = jwt.verify(token, SECRET) as JwtPayload;
-
-
         const user = await prisma.user.findUnique({
             where: { id: decoded.id },
         });
-
         if (!user) {
             return res.status(403).send('User not found');
         }

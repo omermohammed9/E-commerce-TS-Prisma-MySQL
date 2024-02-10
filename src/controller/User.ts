@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import {PrismaClient, User,} from '@prisma/client';
 import {hashPassword} from "../utils/passwordUtils";
 import {PrismaClientKnownRequestError} from "@prisma/client/runtime/library";
-import {extractUserVariables, extractUserUpdateVariables} from "./variables";
+import {extractUserVariables, extractUserUpdateVariables} from "../utils/variables";
 import {signJwt} from "../utils/jwt";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -21,7 +21,7 @@ export const createUser = async (req: Request, res: Response) => {
             },
         });
         const tokenOptions: jwt.SignOptions = {
-            expiresIn: '60s',
+            expiresIn: '120s',
             //issuer: 'Tsc-Prisma-MySQL',
             algorithm: 'HS256', // Default algorithm
         };
@@ -51,7 +51,11 @@ export const login = async (req: Request, res: Response) => {
             res.status(401).json({message: 'Invalid password'});
             return;
         }
-        const generateJWT = signJwt(user.id);
+        const tokenOptions: jwt.SignOptions = {
+            expiresIn: '10s',
+            algorithm: 'HS256', // Default algorithm
+        };
+        const generateJWT = signJwt(user.id, tokenOptions);
         res.json({user, token: generateJWT});
     } catch (error: any) {
         res.status(500).send(error.message);
@@ -117,7 +121,6 @@ export const updateUserById = async (req: Request, res: Response) => {
 export const deleteUserById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const softDelete = req.query.softDelete === 'true';  // Check if softDelete query parameter is set to true
-
     try {
         let user;
         if (softDelete) {

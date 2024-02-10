@@ -43,7 +43,6 @@ class OrderController {
         }
     }
 
-
     public async createOrder(req: Request, res: Response) {
         try {
             const newOrder = await this.orderService.createOrder(req.body);

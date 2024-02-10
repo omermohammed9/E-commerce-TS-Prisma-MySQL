@@ -1,4 +1,5 @@
 import { OrderDetailModel, OrderDetail } from '../models/orderDetail.model';
+import {CreateOrderDetailDTO, UpdateOrderDetailDTO} from "../types/orderDetail.types";
 
 class OrderDetailService {
     private orderDetailModel: OrderDetailModel;
@@ -17,12 +18,12 @@ class OrderDetailService {
         return this.orderDetailModel.findOne(id);
     }
 
-    public async addOrderDetail(orderDetailData: Partial<OrderDetail>): Promise<OrderDetail> {
+    public async addOrderDetail(orderDetailData: CreateOrderDetailDTO): Promise<OrderDetail> {
         // Add a new order detail
         return this.orderDetailModel.create(orderDetailData);
     }
 
-    public async updateOrderDetail(id: number, orderDetailData: Partial<OrderDetail>): Promise<OrderDetail> {
+    public async updateOrderDetail(id: number, orderDetailData: UpdateOrderDetailDTO): Promise<OrderDetail> {
         // Update an existing order detail
         return await this.orderDetailModel.update(id, orderDetailData);
     }

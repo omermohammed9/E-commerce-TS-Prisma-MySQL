@@ -28,6 +28,20 @@ class OrderDetailController {
         }
     }
 
+    public async getOrderDetailById(req: Request, res: Response) {
+        try {
+            const orderDetailId = parseInt(req.params.id, 10); // Convert orderId to a number using base 10
+            if (!isNaN(orderDetailId)) {
+                const orderDetail = await this.orderDetailService.getOrderDetailById(orderDetailId);
+                res.status(200).json(orderDetail);
+            } else {
+                // If orderId is not a number, send a bad request response
+                res.status(400).json({error: 'Invalid order detail ID'});
+            }
+        } catch (error: any) {
+            res.status(500).json({error: error.message});
+        }
+    }
     public async addOrderDetail(req: Request, res: Response) {
         try {
             const newOrderDetail = await this.orderDetailService.addOrderDetail(req.body);

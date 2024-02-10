@@ -55,7 +55,6 @@ model Order {
   deliveredAt     DateTime? // When the order was delivered
 }
 
-
 // Enum for Order Status
 enum OrderStatus {
   PENDING

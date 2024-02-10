@@ -5,7 +5,6 @@ config({ path: './src/.env' });
 const SECRET = process.env.JWT_SECRET || 'NoSecret';
 
 function signJwt(id: number, options: jwt.SignOptions): string {
-
     if (!SECRET) {
         throw new Error('Secret key is not defined');
     }
