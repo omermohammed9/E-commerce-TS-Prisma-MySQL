@@ -30,7 +30,7 @@ Our project includes several key components:
 To get started, clone the repository and install the dependencies:
 
 ```bash
-git clone github.com/omermohammed9/Tsc-Prisma-MySQL
+git clone github.com/omermohammed9/E-commerce-TS-Prisma-MySQL
 cd Tsc-Prisma-MySQL
 npm install
 ```
