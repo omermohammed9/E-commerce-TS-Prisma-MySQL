@@ -1,12 +1,14 @@
+import "reflect-metadata";
 import express from 'express';
-import userRoute from "./route/userRoute";
+import { userRoutes} from "./route/userRoute";
 import orderRoute from "./route/orderRoute";
 import orderDetailroute from "./route/orderDetailroute";
+import {container} from "./inversify.config";
 
 const app = express();
 
 app.use(express.json());
-app.use('/users', userRoute);
+app.use('/users', new userRoutes(container).router);
 app.use('/orders', orderRoute);
 app.use('orderdetails', orderDetailroute);
 
