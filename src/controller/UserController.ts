@@ -1,13 +1,116 @@
-import { Request, Response } from 'express';
-import {PrismaClient, User,} from '@prisma/client';
-import {hashPassword} from "../utils/passwordUtils";
-import {PrismaClientKnownRequestError} from "@prisma/client/runtime/library";
-import {extractUserVariables, extractUserUpdateVariables} from "../utils/variables";
-import {signJwt} from "../utils/jwt";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import {inject, injectable} from "inversify";
+import {TYPES} from "../types/types";
+import {IUserService} from "../interfaces/IUserService";
+import {findUpdateDifference} from "../utils/findUpdateDifference";
 
-const prisma = new PrismaClient();
+
+@injectable()
+export class UserController {
+   constructor(@inject(TYPES.IUserService) private userservice: IUserService) {
+   };
+
+
+    public async createUser(req: any, res: any) {
+        const user = await this.userservice.createUser(req.body);
+        res.status(201).json(user);
+    };
+
+    public async getAllUsers(req: any, res: any) {
+        try {
+            const users = await this.userservice.getAllUsers();
+            res.status(200).json(users);
+        } catch (error: Response | any) {
+            // Just log the error and send a 500 status code
+            console.error(error.message);
+            if (!res.headersSent) {
+                res.status(500).json({error: error.message});
+            }
+        }
+    };
+
+    public async getUserById(req: any, res: any) {
+        const user = await this.userservice.getUserById(Number(req.params.id));
+        res.status(200).json(user);
+    };
+
+    public async getUserByEmail(req: any, res: any) {
+       const email = req.params.email
+       const user = await this.userservice.getUserByEmail(email);
+        if (user) {
+            res.status(200).json(user);
+        } else {
+            res.status(404).json({error: 'User not found'});
+        }
+    };
+
+    public async updateUser(req: any, res: any) {
+        try{
+            const {original, updated} = await this.userservice.updateUser(Number(req.params.id), req.body);
+            //const changes = findUpdateDifference(original, updated);
+            if (original === null) {
+                throw new Error('User not found');
+            }
+            const changes = findUpdateDifference(original, updated);
+            res.status(200).json({
+                message: 'User updated successfully',
+                original,
+                updated,
+                changes,
+            });
+        }catch (error){
+            console.error(error);
+            res.status(500).json({message: 'An error occurred while updating the user.'});
+        }
+    };
+
+    public async deleteUser(req: any, res: any) {
+        const user = await this.userservice.deleteUser(Number(req.params.id));
+        res.status(200).json(user);
+    };
+
+    public async login(req: any, res: any): Promise<void> {
+        try {
+            const {email, password} = req.body;
+            const user = await this.userservice.login(email, password);
+            res.status(200).json(user);
+        } catch (error: any) {
+            if (error.message === 'User not found' || error.message === 'Invalid password') {
+                    res.status(401).json({error: error.message});
+            }
+        }
+    };
+    public async changePassword(req: any, res: any) {
+        try{
+            const userId = Number(req.params.id);
+            const {oldPassword, newPassword} = req.body;
+
+            // Ensure all required information is provided
+            if (!userId || !oldPassword || !newPassword) {
+                return res.status(400).json({message: 'Missing required information.'});
+            }
+            // Call the UserService to change the password
+            const {message} = await this.userservice.changePassword(userId, oldPassword, newPassword);
+
+            res.status(200).json(message);
+        }catch (error: any) {
+            console.error(error);
+            let statusCode = 500; // Default to internal server error
+            let errorMessage = 'An error occurred while changing the password.';
+
+            if (error instanceof Error) {
+                if (error.message === 'User not found.' || error.message === 'Invalid old password.') {
+                    statusCode = error.message === 'User not found.' ? 404 : 401; // Set appropriate status codes
+                    errorMessage = error.message; // Use the error message from the thrown error
+                }
+            }
+            console.error(error);
+            res.status(statusCode).json({message: errorMessage});
+        }
+    };
+}
+
+/*
+
 
 export const createUser = async (req: Request, res: Response) => {
    // const userVariables = extractUserVariables(req.body);
@@ -57,14 +160,6 @@ export const login = async (req: Request, res: Response) => {
         };
         const generateJWT = signJwt(user.id, tokenOptions);
         res.json({user, token: generateJWT});
-    } catch (error: any) {
-        res.status(500).send(error.message);
-    }
-};
-export const getAllUsers = async (_req: Request, res: Response) => {
-    try {
-        const users : User[] = await prisma.user.findMany();
-        res.json(users);
     } catch (error: any) {
         res.status(500).send(error.message);
     }
@@ -147,7 +242,7 @@ export const deleteUserById = async (req: Request, res: Response) => {
         }
     }
 };
-
+*/
 
 
 
