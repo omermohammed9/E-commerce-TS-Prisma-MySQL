@@ -1,13 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-export type OrderDetail = {
-    id: number;
-    orderId: number;
-    productId: number;
-    quantity: number;
-    price: number;
-    // ... other fields ...
-};
+import {OrderDetail, PrismaClient} from '@prisma/client';
 
 export class OrderDetailModel {
     private prisma: PrismaClient;

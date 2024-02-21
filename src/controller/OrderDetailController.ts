@@ -15,7 +15,7 @@ class OrderDetailController {
 
     public async getOrderDetails(req: Request, res: Response) {
         try {
-            const orderId = parseInt(req.params.orderId, 10); // Convert orderId to a number using base 10
+            const orderId = parseInt(req.params.orderId ||`not a number`, 10); // Convert orderId to a number using base 10
             if (!isNaN(orderId)) {
                 const orderDetails = await this.orderDetailService.getOrderDetails(orderId);
                 res.status(200).json(orderDetails);
@@ -30,7 +30,7 @@ class OrderDetailController {
 
     public async getOrderDetailById(req: Request, res: Response) {
         try {
-            const orderDetailId = parseInt(req.params.id, 10); // Convert orderId to a number using base 10
+            const orderDetailId = parseInt(req.params.id ||`not a number`, 10); // Convert orderId to a number using base 10
             if (!isNaN(orderDetailId)) {
                 const orderDetail = await this.orderDetailService.getOrderDetailById(orderDetailId);
                 res.status(200).json(orderDetail);
@@ -53,7 +53,7 @@ class OrderDetailController {
 
     public async updateOrderDetail(req: Request, res: Response) {
         try {
-            const orderDetailId = parseInt(req.params.id, 10); // Convert id to a number using base 10
+            const orderDetailId = parseInt(req.params.id ||`not a number`, 10); // Convert id to a number using base 10
             if (!isNaN(orderDetailId)) {
                 // Assuming `updateOrderDetail` expects an object with the order detail's ID and the update data
                 // Validate and/or transform req.body here as needed before passing to the service
@@ -77,7 +77,7 @@ class OrderDetailController {
 
     public async deleteOrderDetail(req: Request, res: Response) {
         try {
-            const orderDetailId = parseInt(req.params.id, 10); // Convert id to a number using base 10
+            const orderDetailId = parseInt(req.params.id ||`not a number`, 10); // Convert id to a number using base 10
             if (!isNaN(orderDetailId)) {
                 await this.orderDetailService.deleteOrderDetail(orderDetailId);
                 res.status(204).send(); // No Content

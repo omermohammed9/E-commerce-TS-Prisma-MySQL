@@ -1,5 +1,6 @@
-import { OrderDetailModel, OrderDetail } from '../models/orderDetail.model';
+import { OrderDetailModel,  } from '../models/orderDetail.model';
 import {CreateOrderDetailDTO, UpdateOrderDetailDTO} from "../types/orderDetail.types";
+import {OrderDetail} from "@prisma/client";
 
 class OrderDetailService {
     private orderDetailModel: OrderDetailModel;
