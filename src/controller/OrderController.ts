@@ -1,24 +1,25 @@
 import { Request, Response } from 'express';
-import OrderService from '../services/OrderService';
-import prisma from '../utils/prismaClient';
-import {Order, OrderModel} from "../models/order.model";
+import {inject, injectable} from "inversify";
+import {TYPES} from "../types/types";
+import {IOrderService} from "../interfaces/IOrderService";
+import {findUpdateDifference} from "../utils/findUpdateDifference";
 
-const orderModel = new OrderModel(prisma);
-class OrderController {
-    private orderService: OrderService;
+@injectable()
+export class OrderController {
+    constructor(@inject(TYPES.IOrderService) private orderService: IOrderService) {};
 
-    constructor() {
-        this.orderService = new OrderService(orderModel);
-        this.getAllOrders = this.getAllOrders.bind(this);
-        this.getOrderById = this.getOrderById.bind(this);
-        this.createOrder = this.createOrder.bind(this);
-        this.updateOrder = this.updateOrder.bind(this);
-        this.deleteOrder = this.deleteOrder.bind(this);
+    public async createOrder(req: Request, res: Response) {
+        try {
+            const newOrder = await this.orderService.createOrder(req.body);
+            res.status(201).json(newOrder);
+        } catch (error : any) {
+            res.status(500).json({ error: error.message });
+        }
     }
 
     public async getAllOrders( req: Request, res: Response) {
         try {
-            const orders: Order[] = await this.orderService.getAllOrders();
+            const orders = await this.orderService.getAllOrders();
             res.status(200).json(orders);
         } catch (error: Response | any) {
             // Just log the error and send a 500 status code
@@ -30,50 +31,68 @@ class OrderController {
     }
 
     public async getOrderById(req: Request, res: Response) {
-        const orderId = parseInt(req.params.id, 10);
+        //const orderId = parseInt(req.params.id || `not a number`, 10);
+        const orderId = Number(req.params.id);
         try {
             if (!isNaN(orderId)) {
                 const order = await this.orderService.getOrderById(orderId);
             res.status(200).json(order);
             } else {
-                res.status(400).json({ error: 'Invalid order id' });
+                res.status(400).json({ error: `Invalid order id` });
             }
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
     }
 
-    public async createOrder(req: Request, res: Response) {
+    public async updateOrder(req: Request, res: Response): Promise<void> {
+        //const orderId = parseInt(req.params.id || `not a number`, 10);
+        const orderId = Number(req.params.id);
+
+        // Validate orderId early to return a clear error message.
+        if (isNaN(orderId)) {
+            res.status(400).json({ error: 'Invalid order ID provided' });
+            return;
+        }
+
         try {
-            const newOrder = await this.orderService.createOrder(req.body);
-            res.status(201).json(newOrder);
-        } catch (error : any) {
-            res.status(500).json({ error: error.message });
+            const { original, updated } = await this.orderService.updateOrder(orderId, req.body);
+
+            // Check if the order was found and updated successfully.
+            if (!original || !updated) {
+                res.status(404).json({ error: 'Order not found' });
+                return;
+            }
+
+            // Calculate differences between the original and updated order.
+            const changes = findUpdateDifference(original, updated);
+
+            // Respond with a success message and the details of the update.
+            res.status(200).json({
+                message: 'Order updated successfully',
+                details: {
+                    original,
+                    updated,
+                    changes,
+                },
+            });
+        } catch (error: unknown) {
+            // Handle unexpected errors more safely.
+            const errorMessage = error instanceof Error ? error.message : `An unknown error occurred`;
+            res.status(500).json({ error: errorMessage });
         }
     }
 
-    public async updateOrder(req: Request, res: Response) {
-        const orderId = parseInt(req.params.id, 10);
-        try {
-            if (!isNaN(orderId)) {
-                const updatedOrder = await this.orderService.updateOrder(orderId, req.body);
-                res.status(200).json(updatedOrder);
-            } else {
-                res.status(400).json({ error: 'Invalid order id' });
-            }
-        } catch (error : any) {
-            res.status(500).json({ error: error.message });
-        }
-    }
 
     public async deleteOrder(req: Request, res: Response) {
-        const orderId = parseInt(req.params.id, 10);
+        //const orderId = parseInt(req.params.id ||`not a number`, 10);
+        const orderId = Number(req.params.id);
         try {
             if (!isNaN(orderId)) {
                 const deletedOrder = await this.orderService.deleteOrder(orderId);
                 res.status(200).json(deletedOrder);
             } else {
-                res.status(400).json({ error: 'Invalid order id' });
+                res.status(400).json({ error: `Invalid order id` });
             }
             res.status(204).send();
         } catch (error: any) {
@@ -82,4 +101,3 @@ class OrderController {
     }
 }
 
-export default OrderController;
