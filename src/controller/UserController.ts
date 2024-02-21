@@ -6,13 +6,16 @@ import {findUpdateDifference} from "../utils/findUpdateDifference";
 
 @injectable()
 export class UserController {
-   constructor(@inject(TYPES.IUserService) private userservice: IUserService) {
-   };
+   constructor(@inject(TYPES.IUserService) private userservice: IUserService) {};
 
 
     public async createUser(req: any, res: any) {
-        const user = await this.userservice.createUser(req.body);
-        res.status(201).json(user);
+        try{
+            const user = await this.userservice.createUser(req.body);
+            res.status(201).json(user);
+        }catch (error: any) {
+            res.status(500).json({error: error.message});
+        }
     };
 
     public async getAllUsers(req: any, res: any) {
@@ -29,8 +32,12 @@ export class UserController {
     };
 
     public async getUserById(req: any, res: any) {
-        const user = await this.userservice.getUserById(Number(req.params.id));
-        res.status(200).json(user);
+        try{
+            const user = await this.userservice.getUserById(Number(req.params.id));
+            res.status(200).json(user);
+        }catch (error){
+            res.status(404).json({error: `User not found`});
+        }
     };
 
     public async getUserByEmail(req: any, res: any) {
@@ -39,7 +46,7 @@ export class UserController {
         if (user) {
             res.status(200).json(user);
         } else {
-            res.status(404).json({error: 'User not found'});
+            res.status(404).json({error: `User not found`});
         }
     };
 
@@ -48,18 +55,18 @@ export class UserController {
             const {original, updated} = await this.userservice.updateUser(Number(req.params.id), req.body);
             //const changes = findUpdateDifference(original, updated);
             if (original === null) {
-                throw new Error('User not found');
+                throw new Error(`User not found`);
             }
             const changes = findUpdateDifference(original, updated);
             res.status(200).json({
-                message: 'User updated successfully',
+                message: `User updated successfully`,
                 original,
                 updated,
                 changes,
             });
         }catch (error){
             console.error(error);
-            res.status(500).json({message: 'An error occurred while updating the user.'});
+            res.status(500).json({message: `An error occurred while updating the user.`});
         }
     };
 
@@ -74,7 +81,7 @@ export class UserController {
             const user = await this.userservice.login(email, password);
             res.status(200).json(user);
         } catch (error: any) {
-            if (error.message === 'User not found' || error.message === 'Invalid password') {
+            if (error.message === `User not found` || error.message === `Invalid password`) {
                     res.status(401).json({error: error.message});
             }
         }
@@ -86,7 +93,7 @@ export class UserController {
 
             // Ensure all required information is provided
             if (!userId || !oldPassword || !newPassword) {
-                return res.status(400).json({message: 'Missing required information.'});
+                return res.status(400).json({message: `Missing required information.`});
             }
             // Call the UserService to change the password
             const {message} = await this.userservice.changePassword(userId, oldPassword, newPassword);
@@ -95,11 +102,11 @@ export class UserController {
         }catch (error: any) {
             console.error(error);
             let statusCode = 500; // Default to internal server error
-            let errorMessage = 'An error occurred while changing the password.';
+            let errorMessage = `An error occurred while changing the password.`;
 
             if (error instanceof Error) {
-                if (error.message === 'User not found.' || error.message === 'Invalid old password.') {
-                    statusCode = error.message === 'User not found.' ? 404 : 401; // Set appropriate status codes
+                if (error.message ===  `User not found.` || error.message === `Invalid old password.`) {
+                    statusCode = error.message === `User not found.` ? 404 : 401; // Set appropriate status codes
                     errorMessage = error.message; // Use the error message from the thrown error
                 }
             }
