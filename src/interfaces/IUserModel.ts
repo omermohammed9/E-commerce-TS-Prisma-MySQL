@@ -9,6 +9,7 @@ export interface IUserModel {
     updateUser(userId: number, updateDetails: UpdateUserDTO): Promise<PrismaUser>;
     deleteUser(userId: number): Promise<void>;
     changePassword(userId: number,  newPassword: string): Promise<void>;
+    updateLastLogin(userId: number): Promise<void>;
     //checkUserExists(email: string): Promise<boolean>;
     //login(email: string, password: string): Promise<{ user: PrismaUser; token: string }>;
     //verifyUserPassword(email: string, password: string): Promise<boolean>;
