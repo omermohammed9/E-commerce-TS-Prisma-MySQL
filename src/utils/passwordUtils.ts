@@ -1,4 +1,4 @@
-// passwordUtils.ts
+
 import * as bcrypt from 'bcrypt';
 
 export function hashPassword(password: string): string {
