@@ -3,6 +3,9 @@ import {NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import prisma from "../utils/prismaClient";
 import {config} from "dotenv";
+import {getTokenFromHeaders} from "../utils/getToken";
+import {HttpException, httpStatus} from "node-http-exceptions";
+
 
 interface JwtPayload {
     id: number;
@@ -17,9 +20,11 @@ if (!SECRET) {
 }
 
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization; // Assuming 'Bearer TOKEN'
+    //const token = req.headers.authorization; // Assuming 'Bearer TOKEN'
+    const token = getTokenFromHeaders(req);
     if (!token) {
-        return res.status(401).send('Access token is required');
+        //return res.status(401).send('Access token is required');
+        return next(new HttpException(httpStatus.UNAUTHORIZED, 'Access token is required'));
     }
     try {
         const decoded = jwt.verify(token, SECRET) as JwtPayload;
@@ -27,18 +32,18 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
             where: { id: decoded.id },
         });
         if (!user) {
-            return res.status(403).send('User not found');
+            return next(new HttpException(403, 'User not found'));
         }
 
         req.user = user;
         next();
     } catch (error) {
         if (error instanceof jwt.JsonWebTokenError) {
-            return res.status(403).send('Invalid or expired token');
+            next(new HttpException(403, 'Invalid or expired token'));
         } else {
             // Log the error internally and return a generic error message
             console.error(error);
-            return res.status(500).send('Internal server error');
+            next(new HttpException(500, 'Internal server error'));
         }
     }
 };
