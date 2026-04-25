@@ -1,12 +1,14 @@
-import {CreateOrderDTO, orderResponse, UpdateOrderDTO} from "../types/order.types";
-import {IOrderService} from "../interfaces/IOrderService";
-import {IOrderModel} from "../interfaces/IOrderModel";
-import {inject, injectable} from "inversify";
-import {TYPES} from "../types/types";
-import {UpdateOrderAttributes} from "../utils/updateOrderAttributes";
-import {findUpdateDifference} from "../utils/findUpdateDifference";
-import {OrderNotFoundError} from "../utils/ErrorTypes";
-import {formatOrderResponse} from "../utils/formatOrderResponse";
+import { CreateOrderDTO, orderResponse, UpdateOrderDTO } from "../types/order.types";
+import { IOrderService } from "../interfaces/IOrderService";
+import { IOrderModel } from "../interfaces/IOrderModel";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../types/types";
+import { UpdateOrderAttributes } from "../utils/updateOrderAttributes";
+import { findUpdateDifference } from "../utils/findUpdateDifference";
+import { OrderNotFoundError } from "../utils/ErrorTypes";
+import { formatOrderResponse } from "../utils/formatOrderResponse";
+import { Order } from "@prisma/client";
+import prisma from "../utils/prismaClient";
 
 @injectable()
 export class OrderService implements IOrderService {
@@ -16,21 +18,65 @@ export class OrderService implements IOrderService {
         this.orderModel = orderModel;
     }
 
-    public async createOrder(orderData:CreateOrderDTO): Promise<orderResponse > {
-        // Create a new order
-        const newOrder = await this.orderModel.createOrder(orderData);
-        return formatOrderResponse(newOrder)
+    public async createOrder(orderData: CreateOrderDTO): Promise<orderResponse> {
+        const { items, ...orderInfo } = orderData;
+
+        // Perform the entire checkout process in an atomic transaction
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Create the Order and its associated OrderDetails
+            const newOrder = await tx.order.create({
+                data: {
+                    ...orderInfo,
+                    orderDetails: {
+                        create: items.map(item => ({
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            price: item.price
+                        }))
+                    }
+                },
+                include: {
+                    orderDetails: true
+                }
+            });
+
+            // 2. Validate stock and decrement for each product
+            for (const item of items) {
+                const product = await tx.product.findUnique({
+                    where: { id: item.productId }
+                });
+
+                if (!product) {
+                    throw new Error(`Product with ID ${item.productId} not found`);
+                }
+
+                if (product.stockQuantity < item.quantity) {
+                    throw new Error(`Insufficient stock for product: ${product.name}. Requested: ${item.quantity}, Available: ${product.stockQuantity}`);
+                }
+
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: {
+                        stockQuantity: {
+                            decrement: item.quantity
+                        }
+                    }
+                });
+            }
+
+            return newOrder;
+        });
+
+        return formatOrderResponse(result);
     }
 
     public async getAllOrders(): Promise<orderResponse[]> {
-        const orders = await this.orderModel.getAllOrders();
+        const orders: Order[] = await this.orderModel.getAllOrders();
         if (!orders) return [];
         return orders.map(formatOrderResponse);
     }
 
-
     public async getOrderById(id: number): Promise<orderResponse | null> {
-        // Get an order by id
         const order = await this.orderModel.getOrderById(id);
         if (!order) return null;
         return formatOrderResponse(order);
@@ -43,21 +89,18 @@ export class OrderService implements IOrderService {
         }
         const updatedOrder = await this.orderModel.updateOrder(id, orderData);
         const difference = findUpdateDifference(originalOrder, updatedOrder);
-        return {original: originalOrder, updated: difference};
+        return { original: originalOrder, updated: difference };
     }
 
     public async deleteOrder(id: number): Promise<{ message: string; status: 200 | 404 }> {
-        // Delete an order
         try {
             await this.orderModel.deleteOrder(id);
             return {
                 message: `Order deleted successfully`,
                 status: 200
             };
-
-        }
-        catch (error) {
-            if (error instanceof OrderNotFoundError){
+        } catch (error) {
+            if (error instanceof OrderNotFoundError) {
                 return {
                     message: error.message,
                     status: 404
@@ -67,5 +110,3 @@ export class OrderService implements IOrderService {
         }
     }
 }
-
-

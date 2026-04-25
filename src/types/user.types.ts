@@ -1,4 +1,5 @@
-import {UserRole} from "@prisma/client";
+import { UserRole } from "@prisma/client";
+import { IsEmail, IsNotEmpty, IsString, IsOptional, MinLength, IsBoolean } from 'class-validator';
 
 export type UserAttributes = {
     id: number;
@@ -11,22 +12,90 @@ export type UserAttributes = {
     bio?: string;
     phoneNumber: string;
     address: string;
-    socialLinks?: string;
+    socialLinks?: any;
     isActive: boolean;
     emailVerified: boolean;
-    lastLogin: Date;
+    lastLogin: Date | null;
     role: UserRole;
     createdAt: Date;
     updatedAt: Date;
-
 };
 
-export type CreateUserDTO = Omit<UserAttributes, 'id' | 'createdAt' | 'updatedAt' | 'lastLogin' | 'role' | 'passwordHash' | 'emailVerified' | 'isActive'> & {
-    passwordHash: string;
-};
-export type UpdateUserDTO = Partial<Omit<UserAttributes,
-    'id' | 'createdAt' | 'updatedAt' | 'role' | 'passwordHash' | 'isActive' | 'emailVerified'
->> & {
-    password?: string; // Optional: only include when updating the password
-};
-export type userResponse = Pick<UserAttributes, 'id' | 'username' | 'email'>
+export class CreateUserDTO {
+    @IsString()
+    @IsNotEmpty()
+    username!: string;
+
+    @IsString()
+    @MinLength(6)
+    @IsNotEmpty()
+    passwordHash!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    firstName!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    lastName!: string;
+
+    @IsEmail()
+    email!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    phoneNumber!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    address!: string;
+
+    @IsOptional()
+    @IsString()
+    profilePicture?: string;
+
+    @IsOptional()
+    @IsString()
+    bio?: string;
+}
+
+export class UpdateUserDTO {
+    @IsOptional()
+    @IsString()
+    username?: string;
+
+    @IsOptional()
+    @IsEmail()
+    email?: string;
+
+    @IsOptional()
+    @IsString()
+    firstName?: string;
+
+    @IsOptional()
+    @IsString()
+    lastName?: string;
+
+    @IsOptional()
+    @IsString()
+    phoneNumber?: string;
+
+    @IsOptional()
+    @IsString()
+    address?: string;
+
+    @IsOptional()
+    @IsString()
+    profilePicture?: string;
+
+    @IsOptional()
+    @IsString()
+    bio?: string;
+
+    @IsOptional()
+    @IsString()
+    @MinLength(6)
+    password?: string;
+}
+
+export type userResponse = Pick<UserAttributes, 'id' | 'username' | 'email'>;

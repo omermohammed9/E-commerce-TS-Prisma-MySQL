@@ -12,13 +12,13 @@ model User {
   id              Int       @id @default(autoincrement())
   username        String    @unique
   passwordHash    String
-  firstName       String?
-  lastName        String?
+  firstName       String
+  lastName        String
   email           String    @unique
   profilePicture  String?
   bio             String?
-  phoneNumber     String?
-  address         String?
+  phoneNumber     String
+  address         String
   isActive        Boolean   @default(true)
   emailVerified   Boolean   @default(false)
   lastLogin       DateTime?
@@ -27,6 +27,7 @@ model User {
   socialLinks     Json?
   privacySettings Json?
   orders        Order[]
+  role          UserRole    @default(USER)
 }
 model Order {
   id            Int       @id @default(autoincrement())
@@ -37,32 +38,39 @@ model Order {
   createdAt     DateTime  @default(now()) // When the order was placed
   updatedAt     DateTime  @updatedAt // When the order was last updated
 
-  // Relations
+  //Relations
   user          User      @relation(fields: [userId], references: [id])
   orderDetails  OrderDetail[] // The items within the order
 
-  // Optional: Shipping and Billing Information
+  //Optional: Shipping and Billing Information
   shippingAddress String? // Shipping address for the order
   billingAddress  String? // Billing address for the order
 
-  // Optional: Payment Information
+  //Optional: Payment Information
   paymentMethod   String? // Payment method used
-  paymentDetails  Json?   // JSON field for additional payment details like transaction IDs
+  paymentDetails  Json  ? // JSON field for additional payment details like transaction IDs
 
-  // Optional: Tracking Information
+  //Optional: Tracking Information
   trackingNumber  String? // Tracking number for shipment
   shippedAt       DateTime? // When the order was shipped
   deliveredAt     DateTime? // When the order was delivered
 }
 
+
+enum UserRole{
+  USER
+  ADMIN
+}
+
 // Enum for Order Status
 enum OrderStatus {
   PENDING
-  CONFIRMED
+  PROCESSING
   SHIPPED
   DELIVERED
   CANCELLED
 }
+
 
 // Enum for Payment Status
 enum PaymentStatus {
@@ -72,7 +80,7 @@ enum PaymentStatus {
   REFUNDED
 }
 
-// OrderDetail could look like this
+//OrderDetail could look like this
 model OrderDetail {
   id          Int     @id @default(autoincrement())
   orderId     Int     // Foreign key that references the Order model's id
@@ -82,7 +90,23 @@ model OrderDetail {
   createdAt   DateTime @default(now()) // When the item was added to the order
   updatedAt   DateTime @updatedAt // When the item was last updated
   // Relations
-  order       Order   @relation(fields: [orderId], references: [id])
-  // product     Product @relation(fields: [productId], references: [id]) // Uncomment if you have a Product model
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+  //product     Product @relation(fields: [productId], references: [id]) // Uncomment if you have a Product model
   @@unique([orderId, productId]) // Each product can only appear once per order
+}
+
+model Product {
+  id            Int           @id @default(autoincrement())
+  name          String
+  description   String?
+  price         Float
+  stockQuantity Int
+  image         String
+  category      String?       // Optional, consider a Category model for more complex setups
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  orderDetails  OrderDetail[]
+
+  // Additional fields as needed, e.g., SKU, weight, dimensions, etc.
 }

@@ -1,8 +1,9 @@
 import express from 'express';
-import {UserController} from "../controller/UserController";
-import {TYPES} from "../types/types";
-import {Container} from "inversify";
-
+import { UserController } from "../controller/UserController";
+import { TYPES } from "../types/types";
+import { Container } from "inversify";
+import { validationMiddleware } from "../middleware/validation.middleware";
+import { CreateUserDTO, UpdateUserDTO } from "../types/user.types";
 
 export class userRoutes {
     public router: express.Router;
@@ -16,17 +17,17 @@ export class userRoutes {
 
     private configureRoutes(): void {
         const userController = this.container.get<UserController>(TYPES.UserController);
-        this.router.post('/signup', (req, res) => userController.createUser(req, res));
+        this.router.post('/signup', validationMiddleware(CreateUserDTO), (req, res) => userController.createUser(req, res));
         this.router.get('/', (req, res) => userController.getAllUsers(req, res));
         this.router.get('/get/:id', (req, res) => userController.getUserById(req, res));
         this.router.get('/getByEmail/:email', (req, res) => userController.getUserByEmail(req, res));
-        this.router.put('/update/:id', (req, res) => userController.updateUser(req, res));
+        this.router.put('/update/:id', validationMiddleware(UpdateUserDTO), (req, res) => userController.updateUser(req, res));
         this.router.delete('/delete/:id', (req, res) => userController.deleteUser(req, res));
         this.router.post('/login', (req, res) => userController.login(req, res));
         this.router.post('/changePassword/:id', (req, res) => userController.changePassword(req, res));
-
     }
 }
+
 
 // export function registerUserRoutes(router: express.Router, container: Container): express.Router {
 //     // Resolve UserController from the container

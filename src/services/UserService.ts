@@ -55,12 +55,11 @@ export class UserService implements IUserService {
             return null;
         }
         // Transform the User object to userResponse format
-        const response: userResponse = {
+        return {
             id: user.id,
             username: user.username,
             email: user.email,
         };
-        return response;
     };
     public async getUserByEmail(email: string): Promise<userResponse | null> {
         const user = await this.userModel.getUserByEmail(email);
@@ -68,12 +67,11 @@ export class UserService implements IUserService {
             return null;
         }
         // Transform the User object to userResponse format
-        const response: userResponse = {
+        return {
             id: user.id,
             username: user.username,
             email: user.email,
         };
-        return response;
     };
 
     public async updateUser(id: number, user: UpdateUserDTO): Promise<UpdateUserAttributes> {
@@ -85,10 +83,8 @@ export class UserService implements IUserService {
 
         // Update user in UserModel
         const updatedUser = await this.userModel.updateUser(id, user);
-
         // Compare and prepare differences if necessary
         const differences = findUpdateDifference(originalUser, updatedUser);
-
         return { original: originalUser, updated: differences };
 
         //return await this.userModel.updateUser(id, user);

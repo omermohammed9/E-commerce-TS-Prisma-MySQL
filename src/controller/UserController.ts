@@ -6,12 +6,12 @@ import {findUpdateDifference} from "../utils/findUpdateDifference";
 
 @injectable()
 export class UserController {
-   constructor(@inject(TYPES.IUserService) private userservice: IUserService) {};
+   constructor(@inject(TYPES.IUserService) private UserService: IUserService) {};
 
 
     public async createUser(req: any, res: any) {
         try{
-            const user = await this.userservice.createUser(req.body);
+            const user = await this.UserService.createUser(req.body);
             res.status(201).json(user);
         }catch (error: any) {
             res.status(500).json({error: error.message});
@@ -20,7 +20,7 @@ export class UserController {
 
     public async getAllUsers(req: any, res: any) {
         try {
-            const users = await this.userservice.getAllUsers();
+            const users = await this.UserService.getAllUsers();
             res.status(200).json(users);
         } catch (error: Response | any) {
             // Just log the error and send a 500 status code
@@ -33,7 +33,7 @@ export class UserController {
 
     public async getUserById(req: any, res: any) {
         try{
-            const user = await this.userservice.getUserById(Number(req.params.id));
+            const user = await this.UserService.getUserById(Number(req.params.id));
             res.status(200).json(user);
         }catch (error){
             res.status(404).json({error: `User not found`});
@@ -42,7 +42,7 @@ export class UserController {
 
     public async getUserByEmail(req: any, res: any) {
        const email = req.params.email
-       const user = await this.userservice.getUserByEmail(email);
+       const user = await this.UserService.getUserByEmail(email);
         if (user) {
             res.status(200).json(user);
         } else {
@@ -52,7 +52,7 @@ export class UserController {
 
     public async updateUser(req: any, res: any) {
         try{
-            const {original, updated} = await this.userservice.updateUser(Number(req.params.id), req.body);
+            const {original, updated} = await this.UserService.updateUser(Number(req.params.id), req.body);
             //const changes = findUpdateDifference(original, updated);
             if (original === null) {
                 throw new Error(`User not found`);
@@ -71,14 +71,14 @@ export class UserController {
     };
 
     public async deleteUser(req: any, res: any) {
-        const user = await this.userservice.deleteUser(Number(req.params.id));
+        const user = await this.UserService.deleteUser(Number(req.params.id));
         res.status(200).json(user);
     };
 
     public async login(req: any, res: any): Promise<void> {
         try {
             const {email, password} = req.body;
-            const user = await this.userservice.login(email, password);
+            const user = await this.UserService.login(email, password);
             res.status(200).json(user);
         } catch (error: any) {
             if (error.message === `User not found` || error.message === `Invalid password`) {
@@ -96,7 +96,7 @@ export class UserController {
                 return res.status(400).json({message: `Missing required information.`});
             }
             // Call the UserService to change the password
-            const {message} = await this.userservice.changePassword(userId, oldPassword, newPassword);
+            const {message} = await this.UserService.changePassword(userId, oldPassword, newPassword);
 
             res.status(200).json(message);
         }catch (error: any) {

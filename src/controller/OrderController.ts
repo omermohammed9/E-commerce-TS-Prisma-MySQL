@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import {Request, Response} from 'express';
 import {inject, injectable} from "inversify";
 import {TYPES} from "../types/types";
 import {IOrderService} from "../interfaces/IOrderService";
@@ -6,20 +6,21 @@ import {findUpdateDifference} from "../utils/findUpdateDifference";
 
 @injectable()
 export class OrderController {
-    constructor(@inject(TYPES.IOrderService) private orderService: IOrderService) {};
+    constructor(@inject(TYPES.IOrderService) private OrderService: IOrderService) {
+    };
 
-    public async createOrder(req: Request, res: Response) {
+    public async createOrder(req: Request, res: Response): Promise<void> {
         try {
-            const newOrder = await this.orderService.createOrder(req.body);
+            const newOrder = await this.OrderService.createOrder(req.body);
             res.status(201).json(newOrder);
         } catch (error : any) {
             res.status(500).json({ error: error.message });
         }
     }
 
-    public async getAllOrders( req: Request, res: Response) {
+    public async getAllOrders(req: Request, res: Response): Promise<void> {
         try {
-            const orders = await this.orderService.getAllOrders();
+            const orders = await this.OrderService.getAllOrders();
             res.status(200).json(orders);
         } catch (error: Response | any) {
             // Just log the error and send a 500 status code
@@ -30,12 +31,12 @@ export class OrderController {
         }
     }
 
-    public async getOrderById(req: Request, res: Response) {
+    public async getOrderById(req: Request, res: Response): Promise<void> {
         //const orderId = parseInt(req.params.id || `not a number`, 10);
-        const orderId = Number(req.params.id);
+        const orderId: number = Number(req.params.id);
         try {
             if (!isNaN(orderId)) {
-                const order = await this.orderService.getOrderById(orderId);
+                const order = await this.OrderService.getOrderById(orderId);
             res.status(200).json(order);
             } else {
                 res.status(400).json({ error: `Invalid order id` });
@@ -56,7 +57,7 @@ export class OrderController {
         }
 
         try {
-            const { original, updated } = await this.orderService.updateOrder(orderId, req.body);
+            const {original, updated} = await this.OrderService.updateOrder(orderId, req.body);
 
             // Check if the order was found and updated successfully.
             if (!original || !updated) {
@@ -84,20 +85,19 @@ export class OrderController {
     }
 
 
-    public async deleteOrder(req: Request, res: Response) {
-        //const orderId = parseInt(req.params.id ||`not a number`, 10);
+    public async deleteOrder(req: Request, res: Response): Promise<void> {
         const orderId = Number(req.params.id);
         try {
             if (!isNaN(orderId)) {
-                const deletedOrder = await this.orderService.deleteOrder(orderId);
+                const deletedOrder = await this.OrderService.deleteOrder(orderId);
                 res.status(200).json(deletedOrder);
             } else {
                 res.status(400).json({ error: `Invalid order id` });
             }
-            res.status(204).send();
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
     }
+
 }
 

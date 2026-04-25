@@ -1,41 +1,42 @@
-import {OrderDetail, PrismaClient} from '@prisma/client';
+import { OrderDetail, PrismaClient } from '@prisma/client';
+import { injectable } from "inversify";
+import { IOrderDetailModel } from "../interfaces/IOrderDetailModel";
+import { CreateOrderDetailDTO, UpdateOrderDetailDTO } from "../types/orderDetail.types";
+import prisma from "../utils/prismaClient";
 
-export class OrderDetailModel {
+@injectable()
+export class OrderDetailModel implements IOrderDetailModel {
     private prisma: PrismaClient;
 
-    constructor(prismaClient: PrismaClient) {
-        this.prisma = prismaClient;
+    constructor() {
+        this.prisma = prisma;
     }
 
-    async findManyByOrderId(orderId: number) {
-        // Here you would use the Prisma client to fetch multiple records based on orderId.
+    async findManyByOrderId(orderId: number): Promise<OrderDetail[]> {
         return this.prisma.orderDetail.findMany({
             where: { orderId }
         });
     }
 
-    async findOne(id: number) {
-        // Fetch a single record based on the id.
+    async findOne(id: number): Promise<OrderDetail | null> {
         return this.prisma.orderDetail.findUnique({
             where: { id }
         });
     }
 
-    async create(data: any): Promise<OrderDetail> {
-        // Create a new record with the provided data.
+    async create(data: CreateOrderDetailDTO): Promise<OrderDetail> {
         return this.prisma.orderDetail.create({ data });
     }
 
-    async update(id: number, data: Partial<OrderDetail>) {
-        // Update the record that matches the id with the new data.
+    async update(id: number, data: UpdateOrderDetailDTO): Promise<OrderDetail> {
         return this.prisma.orderDetail.update({
             where: { id },
             data,
         });
     }
 
-    async delete(id: number) {
-        // Delete the record with the specified id.
+    async delete(id: number): Promise<OrderDetail> {
         return this.prisma.orderDetail.delete({ where: { id } });
     }
 }
+

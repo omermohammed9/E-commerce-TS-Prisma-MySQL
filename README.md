@@ -14,12 +14,12 @@ E-commerce Back-end solution, designed to manage orders and user interactions in
 
 Our project includes several key components:
 
-- **Controllers** (`OrderController.ts`, `OrderDetailController.ts`, `User.ts`): Handle HTTP request routing and logic.
+- **Controllers** (`OrderController.ts`, `OrderDetailController.ts`, `UserController.ts`): Handle HTTP request routing and logic.
 - **Models** (`order.model.ts`, `orderDetail.model.ts`): Define the structure for `Order` and `OrderDetail`.
 - **Services** (`OrderService.ts`, `OrderDetailService.ts`): Contain business logic for data handling.
 - **Middleware** (`auth.ts`): Containt authentication process for User Token.
 - **Types** (`order.types.ts`, `orderDetail.types.ts`): TypeScript type definitions for orders and order details.
-- **User Management** (`User.ts`): Handles user-related operations.
+- **User Management** (`UserController.ts`): Handles user-related operations.
 - **Utils** (`jwt.ts`, `PasswordUtils.ts`, `PrismaClients.ts`): Utility functions for various operations.
 - **Prisma Schema** (`schema.prisma`): Database schema and model definitions.
 
