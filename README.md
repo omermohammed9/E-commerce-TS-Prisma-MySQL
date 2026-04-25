@@ -1,4 +1,4 @@
-# E-commerce Full-Stack Platform (Nuxt 3 + Express + Prisma + MySQL)
+# AuraCommerce (Nuxt 3 + Express + Prisma + MySQL)
 
 ## The Journey: How It Was vs. How It Is
 
