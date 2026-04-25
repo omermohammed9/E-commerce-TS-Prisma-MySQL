@@ -22,6 +22,7 @@ import { IOrderDetailModel } from "./interfaces/IOrderDetailModel";
 import OrderDetailService from "./services/OrderDetailService";
 import { IOrderDetailService } from "./interfaces/IOrderDetailService";
 import { OrderDetailController } from "./controller/OrderDetailController";
+import { CronService } from "./services/CronService";
 
 export const container: Container = new Container();
 
@@ -42,3 +43,6 @@ container.bind<ProductController>(TYPES.ProductController).to(ProductController)
 container.bind<IOrderDetailModel>(TYPES.IOrderDetailModel).to(OrderDetailModel);
 container.bind<IOrderDetailService>(TYPES.IOrderDetailService).to(OrderDetailService);
 container.bind<OrderDetailController>(TYPES.OrderDetailController).to(OrderDetailController);
+
+// Cron bindings
+container.bind<CronService>(TYPES.CronService).to(CronService).inSingletonScope();

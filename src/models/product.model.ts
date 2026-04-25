@@ -16,8 +16,31 @@ export class ProductModel implements IProductModel {
         return this.prisma.product.create({ data });
     }
 
-    async getAllProducts(): Promise<Product[]> {
-        return this.prisma.product.findMany();
+    async getAllProducts(search?: string, category?: string, page: number = 1, limit: number = 10): Promise<{ products: Product[], total: number }> {
+        const skip = (page - 1) * limit;
+        const where = {
+            AND: [
+                search ? {
+                    OR: [
+                        { name: { contains: search } },
+                        { description: { contains: search } }
+                    ]
+                } : {},
+                category ? { category: { equals: category } } : {}
+            ]
+        };
+
+        const [products, total] = await Promise.all([
+            this.prisma.product.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { id: 'desc' }
+            }),
+            this.prisma.product.count({ where })
+        ]);
+
+        return { products, total };
     }
 
     async getProductById(id: number): Promise<Product | null> {

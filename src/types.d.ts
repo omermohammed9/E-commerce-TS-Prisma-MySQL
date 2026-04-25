@@ -1,9 +1,10 @@
-import {Prisma} from "@prisma/client";
+import { User, Order } from "@prisma/client";
 
 declare global {
     namespace Express {
         interface Request {
-            user :Prisma.User;
+            user?: User;
+            order?: Order;
         }
     }
-}
+}

@@ -93,4 +93,22 @@ export class UpdateOrderDTO {
     trackingNumber?: string;
 }
 
-export type orderResponse = Pick<OrderAttributes, 'id' | 'totalAmount' | 'status' | 'paymentStatus' | 'paymentDetails' | 'paymentMethod' | 'billingAddress' | 'shippingAddress' | 'shippedAt' | 'deliveredAt'>;
+export type OrderItemResponse = {
+    productId: number;
+    productName: string;
+    productImage: string;
+    quantity: number;
+    price: number;
+};
+
+export type orderResponse = Pick<OrderAttributes, 'id' | 'userId' | 'totalAmount' | 'status' | 'paymentStatus' | 'paymentDetails' | 'paymentMethod' | 'billingAddress' | 'shippingAddress' | 'shippedAt' | 'deliveredAt' | 'createdAt'> & {
+    items?: OrderItemResponse[];
+};
+
+export type PaginatedOrderResponse = {
+    orders: orderResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+};

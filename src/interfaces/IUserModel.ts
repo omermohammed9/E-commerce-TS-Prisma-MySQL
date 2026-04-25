@@ -1,8 +1,8 @@
 import {CreateUserDTO, UpdateUserDTO} from "../types/user.types";
-import {User as PrismaUser} from "@prisma/client";
+import {Prisma, User as PrismaUser} from "@prisma/client";
 
 export interface IUserModel {
-    createUser(userDetails: CreateUserDTO): Promise<PrismaUser>;
+    createUser(userDetails: Prisma.UserCreateInput): Promise<PrismaUser>;
     getAllUsers(): Promise<PrismaUser[]>;
     getUserById(userId: number): Promise<PrismaUser | null>;
     getUserByEmail(email: string): Promise<PrismaUser | null>;
@@ -10,7 +10,10 @@ export interface IUserModel {
     deleteUser(userId: number): Promise<void>;
     changePassword(userId: number,  newPassword: string): Promise<void>;
     updateLastLogin(userId: number): Promise<void>;
-    //checkUserExists(email: string): Promise<boolean>;
-    //login(email: string, password: string): Promise<{ user: PrismaUser; token: string }>;
-    //verifyUserPassword(email: string, password: string): Promise<boolean>;
+    createRefreshToken(userId: number, token: string, expiresAt: Date): Promise<void>;
+    findRefreshToken(token: string): Promise<any>;
+    revokeRefreshToken(token: string): Promise<void>;
+    revokeAllUserRefreshTokens(userId: number): Promise<void>;
+    updateEmailVerification(userId: number, verified: boolean): Promise<void>;
+    deleteExpiredRefreshTokens(): Promise<number>;
 }

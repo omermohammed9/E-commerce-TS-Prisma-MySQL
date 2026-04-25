@@ -1,25 +1,47 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  future: {
+    compatibilityVersion: 4
+  },
+
   modules: [
     '@nuxt/eslint',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    '@pinia/nuxt',
+    '@pinia-plugin-persistedstate/nuxt',
+    '@vueuse/nuxt'
   ],
+
+  routeRules: {
+    '/': { prerender: true },
+    '/products/**': { prerender: true }
+  },
 
   runtimeConfig: {
     public: {
-      apiBase: '' // Default value, will be overridden by NUXT_PUBLIC_API_BASE env var
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:5000'
     }
   },
 
+  app: {
+    head: {
+      title: 'TSC Shop - Premium E-commerce',
+      meta: [
+        { name: 'description', content: 'Experience the future of online shopping with TSC Shop.' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      ]
+    }
+  },
+
+  ssr: false,
+
   devtools: {
-    enabled: true
+    enabled: false
   },
 
   css: ['~/assets/css/main.css'],
-
-  routeRules: {
-    '/': { prerender: true }
-  },
 
   compatibilityDate: '2025-01-15',
 

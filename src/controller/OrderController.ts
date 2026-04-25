@@ -18,10 +18,24 @@ export class OrderController {
         }
     }
 
+    public async getMyOrders(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = (req as any).user.id;
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const result = await this.OrderService.getOrdersByUserId(userId, page, limit);
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     public async getAllOrders(req: Request, res: Response): Promise<void> {
         try {
-            const orders = await this.OrderService.getAllOrders();
-            res.status(200).json(orders);
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const result = await this.OrderService.getAllOrders(page, limit);
+            res.status(200).json(result);
         } catch (error: Response | any) {
             // Just log the error and send a 500 status code
             console.error(error.message);

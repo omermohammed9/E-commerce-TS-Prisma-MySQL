@@ -11,15 +11,45 @@ export class OrderModel implements IOrderModel {
     }
 
     async createOrder(data: CreateOrderDTO): Promise<PrismaOrder> {
-        return prisma.order.create({ data });
+        return prisma.order.create({ 
+            data,
+            include: {
+                orderDetails: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
     }
 
-    async getAllOrders(): Promise<PrismaOrder[]> {
-        return prisma.order.findMany();
+    async getAllOrders(skip: number, take: number): Promise<{ orders: PrismaOrder[]; total: number }> {
+        const [orders, total] = await Promise.all([
+            prisma.order.findMany({ skip, take }),
+            prisma.order.count()
+        ]);
+        return { orders, total };
     }
 
     async getOrderById(id: number): Promise<PrismaOrder | null> {
-        return prisma.order.findUnique({ where: { id } });
+        return prisma.order.findUnique({ 
+            where: { id },
+            include: {
+                orderDetails: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
+    }
+
+    async getOrdersByUserId(userId: number, skip: number, take: number): Promise<{ orders: PrismaOrder[]; total: number }> {
+        const [orders, total] = await Promise.all([
+            prisma.order.findMany({ where: { userId }, skip, take }),
+            prisma.order.count({ where: { userId } })
+        ]);
+        return { orders, total };
     }
 
     async updateOrder(id: number, data: UpdateOrderDTO): Promise<PrismaOrder> {

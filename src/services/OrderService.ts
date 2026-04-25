@@ -1,4 +1,4 @@
-import { CreateOrderDTO, orderResponse, UpdateOrderDTO } from "../types/order.types";
+import { CreateOrderDTO, orderResponse, UpdateOrderDTO, PaginatedOrderResponse } from "../types/order.types";
 import { IOrderService } from "../interfaces/IOrderService";
 import { IOrderModel } from "../interfaces/IOrderModel";
 import { inject, injectable } from "inversify";
@@ -70,16 +70,36 @@ export class OrderService implements IOrderService {
         return formatOrderResponse(result);
     }
 
-    public async getAllOrders(): Promise<orderResponse[]> {
-        const orders: Order[] = await this.orderModel.getAllOrders();
-        if (!orders) return [];
-        return orders.map(formatOrderResponse);
+    public async getAllOrders(page: number, limit: number): Promise<PaginatedOrderResponse> {
+        const skip = (page - 1) * limit;
+        const { orders, total } = await this.orderModel.getAllOrders(skip, limit);
+        
+        return {
+            orders: orders.map(formatOrderResponse),
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
     public async getOrderById(id: number): Promise<orderResponse | null> {
         const order = await this.orderModel.getOrderById(id);
         if (!order) return null;
         return formatOrderResponse(order);
+    }
+
+    public async getOrdersByUserId(userId: number, page: number, limit: number): Promise<PaginatedOrderResponse> {
+        const skip = (page - 1) * limit;
+        const { orders, total } = await this.orderModel.getOrdersByUserId(userId, skip, limit);
+        
+        return {
+            orders: orders.map(formatOrderResponse),
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
     public async updateOrder(id: number, orderData: UpdateOrderDTO): Promise<UpdateOrderAttributes> {

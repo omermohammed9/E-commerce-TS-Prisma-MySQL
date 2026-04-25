@@ -1,15 +1,19 @@
 import jwt from 'jsonwebtoken';
-import {config} from "dotenv";
 
-config({ path: './src/.env' });
-const SECRET = process.env.JWT_SECRET || 'NoSecret';
+const ACCESS_SECRET = process.env.JWT_SECRET || 'NoAccessSecret';
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'NoRefreshSecret';
 
-function signJwt(id: number, options: jwt.SignOptions): string {
-    if (!SECRET) {
+function signJwt(id: number, options: jwt.SignOptions, isRefreshToken: boolean = false): string {
+    const secret = isRefreshToken ? REFRESH_SECRET : ACCESS_SECRET;
+    if (!secret) {
         throw new Error('Secret key is not defined');
     }
-    // Sign the token with the payload, secret, and options
-    return jwt.sign({id}, SECRET, options);
+    return jwt.sign({id}, secret, options);
 }
 
-export { signJwt };
+function verifyJwt(token: string, isRefreshToken: boolean = false): any {
+    const secret = isRefreshToken ? REFRESH_SECRET : ACCESS_SECRET;
+    return jwt.verify(token, secret);
+}
+
+export { signJwt, verifyJwt };

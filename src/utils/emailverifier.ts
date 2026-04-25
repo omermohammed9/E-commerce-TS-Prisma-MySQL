@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {config} from "dotenv";
 
-config({path: '.env'});
+config();
 interface HunterResponse {
     data: {
         status: string;

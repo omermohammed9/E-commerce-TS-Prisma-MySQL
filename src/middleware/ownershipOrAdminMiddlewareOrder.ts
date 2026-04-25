@@ -1,20 +1,26 @@
+import { Request, Response, NextFunction } from "express";
 import prisma from "../utils/prismaClient";
-import {OrderModel} from "../models/order.model";
+import { HttpException } from "node-http-exceptions";
 
-//const orederService = new OrderService(new OrderModel(prisma));
+export const ownershipOrAdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    const orderId = parseInt(req.params.id, 10);
+    
+    if (isNaN(orderId)) {
+        return next(new HttpException(400, 'Invalid order ID'));
+    }
 
-// const ownershipOrAdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-//     const orderId = parseInt(req.params.id, 10);
-//     const order = await orederService.getOrderById(orderId);
-//
-//     if (!order) {
-//         return res.status(404).json({ error: 'Order not found' });
-//     }
-//
-//     if (req.user && (order.userId === req.user.id || req.user.role === 'ADMIN')) {
-//         req.order = order; // Attach order to request object for downstream use
-//         next();
-//     } else {
-//         return res.status(403).json({ error: 'Not authorized.' });
-//     }
-// };
+    const order = await prisma.order.findUnique({
+        where: { id: orderId }
+    });
+
+    if (!order) {
+        return next(new HttpException(404, 'Order not found'));
+    }
+
+    if (req.user && (order.userId === req.user.id || req.user.role === 'ADMIN')) {
+        req.order = order; // Attach order to request object for downstream use
+        next();
+    } else {
+        return next(new HttpException(403, 'Not authorized to access this order'));
+    }
+};

@@ -12,4 +12,5 @@ export const TYPES = {
     IOrderDetailModel: Symbol.for(`IOrderDetailModel`),
     IOrderDetailService: Symbol.for(`IOrderDetailService`),
     OrderDetailController: Symbol.for(`OrderDetailController`),
+    CronService: Symbol.for(`CronService`),
 }

@@ -17,8 +17,8 @@ export class ProductService implements IProductService {
         return this.productModel.createProduct(data);
     }
 
-    async getAllProducts(): Promise<Product[]> {
-        return this.productModel.getAllProducts();
+    async getAllProducts(search?: string, category?: string, page?: number, limit?: number): Promise<{ products: Product[], total: number }> {
+        return this.productModel.getAllProducts(search, category, page, limit);
     }
 
     async getProductById(id: number): Promise<Product | null> {

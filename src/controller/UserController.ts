@@ -2,6 +2,7 @@ import {inject, injectable} from "inversify";
 import {TYPES} from "../types/types";
 import {IUserService} from "../interfaces/IUserService";
 import {findUpdateDifference} from "../utils/findUpdateDifference";
+import logger from "../utils/logger";
 
 
 @injectable()
@@ -9,28 +10,79 @@ export class UserController {
    constructor(@inject(TYPES.IUserService) private UserService: IUserService) {};
 
 
+    /**
+     * @swagger
+     * /users/signup:
+     *   post:
+     *     summary: Create a new user
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/CreateUserDTO'
+     *     responses:
+     *       201:
+     *         description: User created successfully
+     *       500:
+     *         description: Server error
+     */
     public async createUser(req: any, res: any) {
         try{
-            const user = await this.UserService.createUser(req.body);
-            res.status(201).json(user);
+            const result = await this.UserService.createUser(req.body);
+            res.status(201).json(result);
         }catch (error: any) {
             res.status(500).json({error: error.message});
         }
     };
 
+    /**
+     * @swagger
+     * /users:
+     *   get:
+     *     summary: Get all users
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: List of users
+     *       500:
+     *         description: Server error
+     */
     public async getAllUsers(req: any, res: any) {
         try {
             const users = await this.UserService.getAllUsers();
             res.status(200).json(users);
         } catch (error: Response | any) {
-            // Just log the error and send a 500 status code
-            console.error(error.message);
+            logger.error(error.message);
             if (!res.headersSent) {
                 res.status(500).json({error: error.message});
             }
         }
     };
 
+    /**
+     * @swagger
+     * /users/get/{id}:
+     *   get:
+     *     summary: Get user by ID
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *     responses:
+     *       200:
+     *         description: User found
+     *       404:
+     *         description: User not found
+     */
     public async getUserById(req: any, res: any) {
         try{
             const user = await this.UserService.getUserById(Number(req.params.id));
@@ -40,6 +92,26 @@ export class UserController {
         }
     };
 
+    /**
+     * @swagger
+     * /users/getByEmail/{email}:
+     *   get:
+     *     summary: Get user by email
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: email
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: User found
+     *       404:
+     *         description: User not found
+     */
     public async getUserByEmail(req: any, res: any) {
        const email = req.params.email
        const user = await this.UserService.getUserByEmail(email);
@@ -50,6 +122,32 @@ export class UserController {
         }
     };
 
+    /**
+     * @swagger
+     * /users/update/{id}:
+     *   put:
+     *     summary: Update user
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/UpdateUserDTO'
+     *     responses:
+     *       200:
+     *         description: User updated successfully
+     *       500:
+     *         description: Server error
+     */
     public async updateUser(req: any, res: any) {
         try{
             const {original, updated} = await this.UserService.updateUser(Number(req.params.id), req.body);
@@ -65,27 +163,138 @@ export class UserController {
                 changes,
             });
         }catch (error){
-            console.error(error);
+            logger.error(error);
             res.status(500).json({message: `An error occurred while updating the user.`});
         }
     };
 
+    /**
+     * @swagger
+     * /users/delete/{id}:
+     *   delete:
+     *     summary: Delete user
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *     responses:
+     *       200:
+     *         description: User deleted successfully
+     */
     public async deleteUser(req: any, res: any) {
         const user = await this.UserService.deleteUser(Number(req.params.id));
         res.status(200).json(user);
     };
 
+    /**
+     * @swagger
+     * /users/login:
+     *   post:
+     *     summary: Login user
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               email:
+     *                 type: string
+     *               password:
+     *                 type: string
+     *     responses:
+     *       200:
+     *         description: Login successful
+     *       401:
+     *         description: Invalid credentials
+     */
     public async login(req: any, res: any): Promise<void> {
         try {
             const {email, password} = req.body;
-            const user = await this.UserService.login(email, password);
-            res.status(200).json(user);
+            const result = await this.UserService.login(email, password);
+            res.status(200).json(result);
         } catch (error: any) {
             if (error.message === `User not found` || error.message === `Invalid password`) {
-                    res.status(401).json({error: error.message});
+                res.status(401).json({error: error.message});
+            } else {
+                res.status(500).json({error: error.message});
             }
         }
     };
+
+    /**
+     * @swagger
+     * /users/refresh:
+     *   post:
+     *     summary: Refresh access token
+     *     tags: [Users]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               refreshToken:
+     *                 type: string
+     *     responses:
+     *       200:
+     *         description: Token refreshed successfully
+     *       401:
+     *         description: Invalid refresh token
+     */
+    public async refresh(req: any, res: any): Promise<void> {
+        try {
+            const {refreshToken} = req.body;
+            if (!refreshToken) {
+                return res.status(400).json({error: 'Refresh token is required'});
+            }
+            const result = await this.UserService.refresh(refreshToken);
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(401).json({error: error.message});
+        }
+    }
+
+    /**
+     * @swagger
+     * /users/logout:
+     *   post:
+     *     summary: Logout user
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               refreshToken:
+     *                 type: string
+     *     responses:
+     *       200:
+     *         description: Logged out successfully
+     */
+    public async logout(req: any, res: any): Promise<void> {
+        try {
+            const {refreshToken} = req.body;
+            if (!refreshToken) {
+                return res.status(400).json({error: 'Refresh token is required'});
+            }
+            await this.UserService.logout(refreshToken);
+            res.status(200).json({message: 'Logged out successfully'});
+        } catch (error: any) {
+            res.status(500).json({error: error.message});
+        }
+    }
     public async changePassword(req: any, res: any) {
         try{
             const userId = Number(req.params.id);

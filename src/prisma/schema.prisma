@@ -28,6 +28,7 @@ model User {
   privacySettings Json?
   orders        Order[]
   role          UserRole    @default(USER)
+  refreshTokens RefreshToken[]
 }
 model Order {
   id            Int       @id @default(autoincrement())
@@ -74,6 +75,7 @@ enum OrderStatus {
 
 // Enum for Payment Status
 enum PaymentStatus {
+  UNPAID
   PENDING
   COMPLETED
   FAILED
@@ -109,4 +111,14 @@ model Product {
   orderDetails  OrderDetail[]
 
   // Additional fields as needed, e.g., SKU, weight, dimensions, etc.
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique @db.VarChar(500)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
 }

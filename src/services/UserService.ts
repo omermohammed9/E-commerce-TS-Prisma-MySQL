@@ -22,27 +22,42 @@ export class UserService implements IUserService {
     constructor(@inject(TYPES.IUserModel)userModel: IUserModel) {
         this.userModel = userModel;
     };
-    public async createUser(user: CreateUserDTO): Promise<userResponse > {
-        const hashedPassword =  hashPassword(user.passwordHash);
-        const emailExists = await verifyEmail(user.email, process.env.HUNTER_API_KEY || 'no API key');
-        const isPhoneNumberValid = validatePhoneNumber(user.phoneNumber);
-        console.log(isPhoneNumberValid);
-        if (!isPhoneNumberValid) {
-            throw new Error('Invalid phone number');
-        }
-        console.log(emailExists.data.result);
-        console.log(emailExists.data.status);
-        if (emailExists.data.result !== 'deliverable' || emailExists.data.status !== 'valid') {
-            throw new Error('Invalid email address');
-        }
+    public async createUser(user: CreateUserDTO): Promise<{ user: userResponse; accessToken: string; refreshToken: string }> {
+        const { password, ...userData } = user;
+        const hashedPassword = await hashPassword(password);
+        
         const newUser = await this.userModel.createUser(
             {
-                ...user,
+                ...userData,
                 passwordHash: hashedPassword
             }
         );
+
+        // Hunter.io email verification - Non-blocking
+        verifyEmail(user.email, process.env.HUNTER_API_KEY || 'no API key')
+            .then(emailExists => {
+                if (emailExists.data.result === 'deliverable' && emailExists.data.status === 'valid') {
+                    this.userModel.updateEmailVerification(newUser.id, true).catch(console.error);
+                }
+            })
+            .catch(error => console.warn('Email verification failed:', error));
+
+        const isPhoneNumberValid = validatePhoneNumber(user.phoneNumber);
+        if (!isPhoneNumberValid) {
+            throw new Error('Invalid phone number');
+        }
+
         const {passwordHash, ...userWithoutPassword} = newUser;
-        return userWithoutPassword;
+        
+        const accessToken = signJwt(newUser.id, { expiresIn: '15m' });
+        const refreshToken = signJwt(newUser.id, { expiresIn: '7d' }, true);
+        
+        // Save refresh token
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        await this.userModel.createRefreshToken(newUser.id, refreshToken, expiresAt);
+
+        return { user: userWithoutPassword, accessToken, refreshToken };
     };
     public async getAllUsers(): Promise<userResponse[]> {
         return this.userModel.getAllUsers();
@@ -105,7 +120,7 @@ export class UserService implements IUserService {
         }
     };
 
-    async login(email: string, password: string): Promise<{ user: User; token: string }> {
+    async login(email: string, password: string): Promise<{ user: User; accessToken: string; refreshToken: string }> {
         const user = await this.userModel.getUserByEmail(email);
         if (!user) {
             throw new Error(`User not found`);
@@ -116,13 +131,41 @@ export class UserService implements IUserService {
             throw new Error(`Invalid password`);
         }
         await this.userModel.updateLastLogin(user.id);
-        const tokenOptions: jwt.SignOptions = {
-            expiresIn: `120s`,
-            algorithm: `HS256`, // Default algorithm
-        };
-        const token = signJwt(user.id, tokenOptions);
-        return { user, token };
+        
+        const accessToken = signJwt(user.id, { expiresIn: '15m' });
+        const refreshToken = signJwt(user.id, { expiresIn: '7d' }, true);
+        
+        // Save refresh token
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        await this.userModel.createRefreshToken(user.id, refreshToken, expiresAt);
+
+        return { user, accessToken, refreshToken };
     };
+
+    async refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+        const savedToken = await this.userModel.findRefreshToken(refreshToken);
+        
+        if (!savedToken || savedToken.revokedAt || new Date() > savedToken.expiresAt) {
+            throw new Error('Invalid or expired refresh token');
+        }
+
+        const accessToken = signJwt(savedToken.userId, { expiresIn: '15m' });
+        const newRefreshToken = signJwt(savedToken.userId, { expiresIn: '7d' }, true);
+
+        // Revoke old token and save new one (Token Rotation)
+        await this.userModel.revokeRefreshToken(refreshToken);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        await this.userModel.createRefreshToken(savedToken.userId, newRefreshToken, expiresAt);
+
+        return { accessToken, refreshToken: newRefreshToken };
+    }
+
+
+    async logout(refreshToken: string): Promise<void> {
+        await this.userModel.revokeRefreshToken(refreshToken);
+    }
 
     async changePassword(userId: number, oldPassword: string, newPassword: string): Promise<{ message: string }> {
         const user = await this.userModel.getUserById(userId);
@@ -133,7 +176,7 @@ export class UserService implements IUserService {
         if (!passwordMatches) {
             throw new Error('Invalid old password');
         }
-        const hashedPassword =  hashPassword(newPassword);
+        const hashedPassword = await hashPassword(newPassword);
         await this.userModel.changePassword(userId,  hashedPassword);
         return { message: 'Password updated successfully' };
     };
